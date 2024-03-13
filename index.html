@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pandas Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { width: 100%; height: 100%; }
+        #timer-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #4CAF50;
+            transition: width 0.1s linear;
+        }
+        .popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            font-size: 24px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .popup.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+<div id="timer-bar"></div>
+    <div id="popup" class="popup"></div>
+    <script>
+        // Set up the scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0xffffff);
+        document.body.appendChild(renderer.domElement);
+
+
+        // Questions and answers
+        const questions = [
+            {
+                question: "Save a Pandas DataFrame (df) to a CSV file. Let the file name be f.",
+                answer: "df.to_csv(f)",
+                placeholder: "df.",
+            },
+            {
+                question: "Merge two Pandas DataFrames (df1 and df2) based on a common column='col'",
+                answer: "pd.merge(df1, df2, on='col')",
+                placeholder: "pd.",
+            },
+            {
+                question: "Fill missing values in a Pandas DataFrame with `0`?",
+                answer: "df.fillna(0)",
+                placeholder: "df.",
+            },
+            {
+                question: "How can I drop rows or columns with missing values in a Pandas DataFrame?",
+                answer: "df.dropna()",
+                placeholder: "df.",
+            },
+            {
+                question: "How can I drop duplicate rows in a Pandas DataFrame?",
+                answer: "df.drop_duplicates()",
+                placeholder: "df.",
+            },
+            {
+                question: "How can I handle null or missing values in a Pandas DataFrame?",
+                answer: "df.isnull().sum()",
+                placeholder: "df.",
+            },
+            {
+                question: "Randomly sample rows from a Pandas DataFrame?",
+                answer: "df.sample(n=5)",
+                placeholder: "df.",
+            },
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer = 20;
+        let timerInterval;
+
+        // Create the question element
+        const questionElement = document.createElement('div');
+        questionElement.style.position = 'absolute';
+        questionElement.style.top = '100px';
+        questionElement.style.left = '50%';
+        questionElement.style.transform = 'translateX(-50%)';
+        questionElement.style.fontSize = '24px';
+        questionElement.style.color = '#333';
+        document.body.appendChild(questionElement);
+
+        // Create the input element
+        const inputElement = document.createElement('input');
+        inputElement.style.position = 'absolute';
+        inputElement.style.top = '200px';
+        inputElement.style.left = '50%';
+        inputElement.style.transform = 'translateX(-50%)';
+        inputElement.style.fontSize = '18px';
+        inputElement.style.padding = '5px';
+        document.body.appendChild(inputElement);
+
+        // Create the feedback element
+        const feedbackElement = document.createElement('div');
+        feedbackElement.style.position = 'absolute';
+        feedbackElement.style.top = '300px';
+        feedbackElement.style.left = '50%';
+        feedbackElement.style.transform = 'translateX(-50%)';
+        feedbackElement.style.fontSize = '24px';
+        feedbackElement.style.color = '#333';
+        document.body.appendChild(feedbackElement);
+
+        // Create the score element
+        const scoreElement = document.createElement('div');
+        scoreElement.style.position = 'absolute';
+        scoreElement.style.top = '50px';
+        scoreElement.style.left = '50%';
+        scoreElement.style.transform = 'translateX(-50%)';
+        scoreElement.style.fontSize = '18px';
+        scoreElement.style.color = '#333';
+        document.body.appendChild(scoreElement);
+
+        // Create the timer element
+        const timerElement = document.createElement('div');
+        timerElement.style.position = 'absolute';
+        timerElement.style.top = '50px';
+        timerElement.style.right = '50px';
+        timerElement.style.fontSize = '18px';
+        timerElement.style.color = '#333';
+        document.body.appendChild(timerElement);
+
+				// Create the timer bar element
+        const timerBarElement = document.getElementById('timer-bar');
+
+        // Create the popup element
+        const popupElement = document.getElementById('popup');
+
+        // Function to start the game
+        function startGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            showQuestion();
+        }
+
+        // Function to show the current question
+        function showQuestion() {
+            const question = questions[currentQuestionIndex];
+            questionElement.textContent = question.question;
+            inputElement.value = question.placeholder;
+            inputElement.focus();
+            startTimer();
+        }
+
+        // Function to start the timer
+        function startTimer() {
+            timer = 20;
+            timerBarElement.style.width = '100%';
+            timerInterval = setInterval(() => {
+                timer--;
+                const progress = (timer / 20) * 100;
+                timerBarElement.style.width = `${progress}%`;
+                if (timer === 0) {
+                    clearInterval(timerInterval);
+                    showFeedback(false);
+                }
+            }, 1000);
+        }
+
+        // Function to show feedback
+        function showFeedback(isCorrect) {
+            clearInterval(timerInterval);
+            if (isCorrect) {
+                popupElement.textContent = 'Well done!';
+                popupElement.style.color = 'green';
+                animatePopup();
+            } else {
+                popupElement.textContent = `Wrong answer. The correct answer is: ${questions[currentQuestionIndex].answer}`;
+                popupElement.style.color = 'red';
+                popupElement.classList.add('show');
+            }
+            setTimeout(() => {
+                popupElement.classList.remove('show');
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    showQuestion();
+                } else {
+                    endGame();
+                }
+            }, 2000);
+        }
+
+        // Function to animate the popup
+        function animatePopup() {
+            const popup = document.createElement('div');
+            popup.textContent = '+1';
+            popup.style.position = 'absolute';
+            popup.style.top = '50%';
+            popup.style.left = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+            popup.style.fontSize = '48px';
+            popup.style.color = 'green';
+            popup.style.opacity = '1';
+            popup.style.transition = 'opacity 0.5s, top 0.5s';
+            document.body.appendChild(popup);
+
+            setTimeout(() => {
+                popup.style.opacity = '0';
+                popup.style.top = '40%';
+            }, 500);
+
+            setTimeout(() => {
+                document.body.removeChild(popup);
+            }, 1000);
+        }
+
+        // Function to check the answer
+        function checkAnswer() {
+            const question = questions[currentQuestionIndex];
+            const userAnswer = inputElement.value;
+            if (userAnswer === question.answer) {
+                score += timer;
+                showFeedback(true);
+            } else {
+                showFeedback(false);
+            }
+        }
+
+        // Function to end the game
+        function endGame() {
+            questionElement.textContent = 'Game Over!';
+            inputElement.style.display = 'none';
+            feedbackElement.textContent = `Your score: ${score}`;
+        }
+
+        // Event listener for the input element
+        inputElement.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Start the game
+        startGame();
+
+        // Render loop
+        function animate() {
+            requestAnimationFrame(animate);
+            scoreElement.textContent = `Score: ${score}`;
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
